@@ -19,10 +19,27 @@ void message_callback(void *argument)
 }
 
 /* [TASK 3: insert your callback function here] */
+void led_callback(void *argument)
+{
+    (void) argument; /* we don't use the argument */
+    LED1_ON;         /* turn LED 1 on */
+    puts("LED1 is ON!!!");
+}
 
 int main(void)
 {
+    printf("%lu\n", ztimer_now(ZTIMER_SEC));
+    ztimer_sleep(ZTIMER_SEC, 1);
+    printf("%lu\n", ztimer_now(ZTIMER_SEC));
+    ztimer_sleep(ZTIMER_SEC, 1);
+    printf("%lu\n", ztimer_now(ZTIMER_SEC));
+
+
     puts("This is a timers example");
+
+    ztimer_t led_timeout;                     /* create a new timer */
+    led_timeout.callback = led_callback;      /* set the function to execute */
+    ztimer_set(ZTIMER_SEC, &led_timeout, 10);
 
     /* we can configure an event to occur in the future by setting a timer */
     ztimer_t timeout;                     /* create a new timer */
@@ -37,10 +54,10 @@ int main(void)
     ztimer_now_t start = ztimer_now(ZTIMER_MSEC);
 
     /* blink an LED for 10 seconds */
-    while ((ztimer_now(ZTIMER_MSEC) - start) <= 10000) {
+    while ((ztimer_now(ZTIMER_MSEC) - start) <= 5000) {
         /* this blinks the LED twice a second */
         LED0_TOGGLE;
-        ztimer_sleep(ZTIMER_MSEC, 500);
+        ztimer_sleep(ZTIMER_MSEC, 250);
     }
 
     puts("Done!");
