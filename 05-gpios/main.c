@@ -20,9 +20,8 @@ gpio_t led1 = GPIO_PIN(1, 10);
 gpio_t button = GPIO_PIN(1, 2);
 
 /* [TASK 2: write the callback function here] */
-void button_callback (void *arg)
-{
-    (void) arg; /* the argument is not used */
+void button_callback(void *arg) {
+    (void)arg; /* the argument is not used */
     if (!gpio_read(button)) {
         gpio_set(led1);
     } else {
@@ -30,8 +29,7 @@ void button_callback (void *arg)
     }
 }
 
-int main(void)
-{
+int main(void) {
     puts("GPIOs example.");
 
     /* [TASK 1: initialize and use led0 here] */
@@ -41,8 +39,7 @@ int main(void)
     gpio_clear(led1);
 
     gpio_init_int(button, GPIO_IN_PU, GPIO_BOTH, button_callback, NULL);
-    while (1)
-    {
+    while (1) {
         gpio_toggle(led0);
         ztimer_sleep(ZTIMER_MSEC, 500);
     }

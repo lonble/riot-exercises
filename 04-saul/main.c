@@ -17,9 +17,8 @@
 #define Z_FLIPPED -1000
 #define ACCEL_JITTER 100
 
-int main(void)
-{
-    ztimer_sleep(ZTIMER_MSEC, 1000);    // wait pyterm for connection
+int main(void) {
+    ztimer_sleep(ZTIMER_MSEC, 1000); // wait pyterm for connection
     puts("SAUL example application");
 
     /* start by finding a temperature sensor in the system */
@@ -27,8 +26,7 @@ int main(void)
     if (!temp_sensor) {
         puts("No temperature sensor present");
         return 1;
-    }
-    else {
+    } else {
         printf("Found temperature device: %s\n", temp_sensor->name);
     }
 
@@ -37,8 +35,7 @@ int main(void)
     if (!accel_sensor) {
         puts("No accelerometer present");
         return 1;
-    }
-    else {
+    } else {
         printf("Found accelerometer device: %s\n", accel_sensor->name);
     }
 
@@ -70,8 +67,7 @@ int main(void)
         /* check if the temperature value is above the threshold */
         if (temperature.val[0] >= TEMPERATURE_THRESHOLD) {
             LED0_ON;
-        }
-        else {
+        } else {
             LED0_OFF;
         }
 
@@ -79,8 +75,7 @@ int main(void)
         if (acceleration.val[2] > Z_FLIPPED - ACCEL_JITTER
             && acceleration.val[2] < Z_FLIPPED + ACCEL_JITTER) {
             LED1_ON;
-        }
-        else {
+        } else {
             LED1_OFF;
         }
 

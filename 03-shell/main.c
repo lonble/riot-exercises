@@ -14,8 +14,7 @@
 #include "board.h"
 
 /* [TASK 2: add command handler here] */
-int toggle_command(int argc, char **argv)
-{
+int toggle_command(int argc, char **argv) {
     /* check that the command is called correctly (no extra arguments) */
     if (argc != 2) {
         printf("usage: %s <led_number>\n", argv[0]);
@@ -39,8 +38,7 @@ int toggle_command(int argc, char **argv)
     return 0;
 }
 
-int echo_command(int argc, char **argv)
-{
+int echo_command(int argc, char **argv) {
     /* check that the command is called correctly */
     if (argc != 2) {
         puts("usage: echo <message>");
@@ -56,10 +54,9 @@ int echo_command(int argc, char **argv)
 
 /* [TASK 2: register your new command here] */
 SHELL_COMMAND(toggle, "Toggle LED", toggle_command);
-SHELL_COMMAND(echo,"Echo a message",echo_command);
+SHELL_COMMAND(echo, "Echo a message", echo_command);
 
-int main(void)
-{
+int main(void) {
     /* buffer to read commands */
     char line_buf[SHELL_DEFAULT_BUFSIZE];
 

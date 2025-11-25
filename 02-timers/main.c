@@ -12,40 +12,36 @@
 /* needed to manipulate the LEDs */
 #include "board.h"
 
-void message_callback(void *argument)
-{
+void message_callback(void *argument) {
     char *message = (char *)argument;
     puts(message);
 }
 
 /* [TASK 3: insert your callback function here] */
-void led_callback(void *argument)
-{
-    (void) argument; /* we don't use the argument */
-    LED1_ON;         /* turn LED 1 on */
+void led_callback(void *argument) {
+    (void)argument; /* we don't use the argument */
+    LED1_ON;        /* turn LED 1 on */
     puts("LED1 is ON!!!");
 }
 
-int main(void)
-{
+int main(void) {
     printf("%lu\n", ztimer_now(ZTIMER_SEC));
     ztimer_sleep(ZTIMER_SEC, 1);
     printf("%lu\n", ztimer_now(ZTIMER_SEC));
     ztimer_sleep(ZTIMER_SEC, 1);
     printf("%lu\n", ztimer_now(ZTIMER_SEC));
-
 
     puts("This is a timers example");
 
-    ztimer_t led_timeout;                     /* create a new timer */
-    led_timeout.callback = led_callback;      /* set the function to execute */
+    ztimer_t led_timeout;                /* create a new timer */
+    led_timeout.callback = led_callback; /* set the function to execute */
     ztimer_set(ZTIMER_SEC, &led_timeout, 10);
 
     /* we can configure an event to occur in the future by setting a timer */
-    ztimer_t timeout;                     /* create a new timer */
-    timeout.callback = message_callback;  /* set the function to execute */
-    timeout.arg = "Timeout!";             /* set the argument that the function will receive */
-    ztimer_set(ZTIMER_SEC, &timeout, 2);  /* set the timer to trigger in 2 seconds */
+    ztimer_t timeout;                    /* create a new timer */
+    timeout.callback = message_callback; /* set the function to execute */
+    timeout.arg = "Timeout!";            /* set the argument that the function will receive */
+    ztimer_set(ZTIMER_SEC, &timeout, 2); /* set the timer to trigger in 2 seconds */
 
     /* [TASK 3: insert your timer here] */
 
