@@ -7,14 +7,12 @@ BOARD ?= adafruit-feather-nrf52840-sense
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../RIOT
 
-# use the shell module
-USEMODULE += shell
-
 FEATURES_REQUIRED += periph_gpio_irq
 
 # use the event module and the predefined high priority queue
 USEMODULE += event
-USEMODULE += event_thread_highest
+USEMODULE += event_thread
+USEMODULE += event_thread_medium
 
 # Enable the milliseconds timer.
 USEMODULE += ztimer_msec
