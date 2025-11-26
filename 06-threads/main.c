@@ -13,15 +13,38 @@
 #include "thread.h"
 
 /* [TASK 1: create the thread handler and stack here] */
+void *blinky_handler(void *arg) {
+    (void)arg; /* argument not used */
 
-int main(void)
-{
+    /* get the current thread descriptor */
+    thread_t *this_thread = thread_get_active();
+
+    /* get the thread name */
+    const char *this_thread_name = thread_get_name(this_thread);
+
+    while (1) {
+        printf("Thread %s\n", this_thread_name);
+        LED1_TOGGLE;
+        ztimer_sleep(ZTIMER_MSEC, 250);
+    }
+}
+
+int main(void) {
     puts("Threads example");
 
-    thread_t * this_thread = thread_get_active();
+    thread_t *this_thread = thread_get_active();
     const char *this_thread_name = thread_get_name(this_thread);
 
     /* [TASK 1: create the thread here] */
+    char blinky_stack[THREAD_STACKSIZE_DEFAULT];
+    thread_create(
+        blinky_stack,
+        sizeof(blinky_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        0,
+        &blinky_handler,
+        NULL,
+        "blinky");
 
     while (1) {
         printf("Thread %s\n", this_thread_name);
