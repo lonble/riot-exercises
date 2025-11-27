@@ -9,6 +9,13 @@ RIOTBASE ?= $(CURDIR)/../RIOT
 
 # use the shell module
 USEMODULE += shell
+USEMODULE += shell_cmds_default
+USEMODULE += ps
+
+# disable echo of shell command
+CFLAGS += -DCONFIG_SHELL_NO_ECHO=1
+# default STDIO_RX_BUFSIZE is 64, increase it to match SHELL_DEFAULT_BUFSIZE
+CFLAGS += -DSTDIO_RX_BUFSIZE=128
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
