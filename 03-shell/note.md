@@ -24,5 +24,3 @@
   - `shell_run_forever()`循环调用`shell_run_once()`，永远不会退出
   - `shell_run()`是`shell_run_forever()`的别名
   - 因为`pyterm`不会把EOF传递给板子，所以这两个函数表现基本相同，都不会退出
-- 
-    
