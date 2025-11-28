@@ -30,20 +30,11 @@ endif
 # object dump allows use to print streams of bytes
 USEMODULE += od
 
-# fmt allows use to format strings
-USEMODULE += fmt
-
 USEMODULE += netutils
 # Add also the shell, some shell commands
 USEMODULE += shell
 USEMODULE += shell_cmds_default
 USEMODULE += ps
-
-# Comment this out to disable code in RIOT that does safety checking
-# which is not needed in a production environment but helps in the
-# development process:
-DEVELHELP ?= 1
-
 
 # We need a larger buffer in order to send some commands without truncation.
 CFLAGS += -DSTDIO_RX_BUFSIZE=128
@@ -52,6 +43,14 @@ CFLAGS += -DSTDIO_RX_BUFSIZE=128
 # from the RD server. Use a larger value if the client drops response packet
 # from RD server.
 CFLAGS += -DCONFIG_GCOAP_PDU_BUF_SIZE=512
+
+# disable echo of shell command
+CFLAGS += -DCONFIG_SHELL_NO_ECHO=1
+
+# Comment this out to disable code in RIOT that does safety checking
+# which is not needed in a production environment but helps in the
+# development process:
+DEVELHELP ?= 1
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

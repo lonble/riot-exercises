@@ -112,7 +112,7 @@ for (unsigned i = 0; i < ARRAY_SIZE(leds); i++) {
 **4. Implement the resource handler function.**
 
 **Start by defining the function with the correct**
-**[signature](https://doc.riot-os.org/group__net__gcoap.html#ga8f62887693fa63a7595565e44156806d):**
+**[signature](https://doc.riot-os.org/group__net__nanocoap.html#ga8b44fbd36baf301f3bf531d1fcfadf9f):**
 ```C
 static ssize_t _led_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx)
 {

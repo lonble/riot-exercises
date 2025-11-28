@@ -6,6 +6,8 @@
  * details.
  */
 
+#pragma once
+
 /**
  * @ingroup     examples
  * @{
@@ -16,35 +18,9 @@
  * @author      Ken Bannister <kb2ma@runbox.com>
  */
 
-#ifndef GCOAP_EXAMPLE_H
-#define GCOAP_EXAMPLE_H
-
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "fmt.h"
-#include "net/gcoap.h"
-#include "net/utils.h"
-#include "od.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern uint16_t req_count;  /**< Counts requests sent by CLI. */
-
 /**
  * @brief   Registers the CoAP resources exposed in the example app
  *
  * Run this exactly one during startup.
  */
-void server_init(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* GCOAP_EXAMPLE_H */
-/** @} */
+extern void server_init(void);

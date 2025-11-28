@@ -25,28 +25,24 @@
 #include <string.h>
 
 #include "shell.h"
-#include "fmt.h"
 #include "net/gcoap.h"
 #include "net/utils.h"
 #include "od.h"
 
-#include "gcoap_example.h"
-
-uint16_t req_count = 0;
+static uint16_t req_count = 0;
 
 /*
  * Response callback.
  */
-static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
-                          const sock_udp_ep_t *remote)
-{
-    (void)remote;       /* not interested in the source currently */
+static void _resp_handler(const gcoap_request_memo_t *memo,
+                          coap_pkt_t *pdu,
+                          const sock_udp_ep_t *remote) {
+    (void)remote; /* not interested in the source currently */
 
     if (memo->state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
         return;
-    }
-    else if (memo->state != GCOAP_MEMO_RESP) {
+    } else if (memo->state != GCOAP_MEMO_RESP) {
         printf("gcoap: error in response\n");
         printf("state: %d\n", memo->state);
         return;
@@ -54,32 +50,30 @@ static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
 
     char *class_str = (coap_get_code_class(pdu) == COAP_CLASS_SUCCESS) ? "Success" : "Error";
 
-    printf("gcoap: response %s, code %1u.%02u", class_str,
-                                                coap_get_code_class(pdu),
-                                                coap_get_code_detail(pdu));
+    printf("gcoap: response %s, code %1u.%02u",
+           class_str,
+           coap_get_code_class(pdu),
+           coap_get_code_detail(pdu));
     if (pdu->payload_len) {
         unsigned content_type = coap_get_content_type(pdu);
         if (content_type == COAP_FORMAT_TEXT
-                || content_type == COAP_FORMAT_LINK
-                || coap_get_code_class(pdu) == COAP_CLASS_CLIENT_FAILURE
-                || coap_get_code_class(pdu) == COAP_CLASS_SERVER_FAILURE) {
+            || content_type == COAP_FORMAT_LINK
+            || coap_get_code_class(pdu) == COAP_CLASS_CLIENT_FAILURE
+            || coap_get_code_class(pdu) == COAP_CLASS_SERVER_FAILURE) {
             /* Expecting diagnostic payload in failure cases */
-            printf(", %u bytes\n%.*s\n", pdu->payload_len, pdu->payload_len,
-                                                          (char *)pdu->payload);
-        }
-        else {
+            printf(", %u bytes\n%.*s\n", pdu->payload_len, pdu->payload_len, (char *)pdu->payload);
+        } else {
             printf(", %u bytes\n", pdu->payload_len);
             od_hex_dump(pdu->payload, pdu->payload_len, OD_WIDTH_DEFAULT);
         }
-    }
-    else {
+    } else {
         printf(", empty payload\n");
     }
 }
 
 static bool _parse_endpoint(sock_udp_ep_t *remote,
-                            const char *addr_str, const char *port_str)
-{
+                            const char *addr_str,
+                            const char *port_str) {
     netif_t *netif;
 
     /* parse hostname */
@@ -100,8 +94,7 @@ static bool _parse_endpoint(sock_udp_ep_t *remote,
     return true;
 }
 
-static size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
-{
+static size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str) {
     size_t bytes_sent;
     sock_udp_ep_t remote;
 
@@ -116,15 +109,13 @@ static size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
     return bytes_sent;
 }
 
-static int _print_usage(char **argv)
-{
+static int _print_usage(char **argv) {
     printf("usage: %s info\n", argv[0]);
-    printf("       %s <get|post|put|delete> <addr>[%%iface] <port> <path> [data]\n",argv[0]);
+    printf("       %s <get|post|put|delete> <addr>[%%iface] <port> <path> [data]\n", argv[0]);
     return 1;
 }
 
-static int _coap_info_cmd(void)
-{
+static int _coap_info_cmd(void) {
     uint8_t open_reqs = gcoap_op_state();
 
     printf("CoAP server is listening on port %u\n", CONFIG_GCOAP_PORT);
@@ -134,18 +125,14 @@ static int _coap_info_cmd(void)
 }
 
 /* map a string to a coap method code */
-int _method_str_to_code(const char *method)
-{
+int _method_str_to_code(const char *method) {
     if (!strcmp(method, "get")) {
         return COAP_METHOD_GET;
-    }
-    else if (!strcmp(method, "post")) {
+    } else if (!strcmp(method, "post")) {
         return COAP_METHOD_POST;
-    }
-    else if (!strcmp(method, "put")) {
+    } else if (!strcmp(method, "put")) {
         return COAP_METHOD_PUT;
-    }
-    else if (!strcmp(method, "delete")) {
+    } else if (!strcmp(method, "delete")) {
         return COAP_METHOD_DELETE;
     }
 
@@ -153,9 +140,7 @@ int _method_str_to_code(const char *method)
     return -1;
 }
 
-int gcoap_cli_cmd(int argc, char **argv)
-{
-
+int gcoap_cli_cmd(int argc, char **argv) {
     uint8_t buf[CONFIG_GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
     size_t len;
@@ -177,13 +162,11 @@ int gcoap_cli_cmd(int argc, char **argv)
     }
 
     /* determine which method to use */
-    int code = _method_str_to_code(argv[position]);
+    int code = _method_str_to_code(argv[position++]);
     if (code < 0) {
         /* unknown method, show help */
         return _print_usage(argv);
     }
-
-    position ++;
 
     char *addr = argv[position++];
     char *port = argv[position++];
@@ -215,8 +198,7 @@ int gcoap_cli_cmd(int argc, char **argv)
         if (pdu.payload_len >= data_len) {
             memcpy(pdu.payload, data, data_len);
             len += data_len;
-        }
-        else {
+        } else {
             puts("The buffer is too small, reduce the message length");
             return 1;
         }
@@ -224,7 +206,7 @@ int gcoap_cli_cmd(int argc, char **argv)
         len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
     }
 
-    printf("gcoap_cli: sending msg ID %u, %u bytes\n", coap_get_id(&pdu), (unsigned) len);
+    printf("gcoap_cli: sending msg ID %u, %u bytes\n", coap_get_id(&pdu), (unsigned)len);
     if (!_send(buf, len, addr, port)) {
         puts("gcoap_cli: msg send failed");
         return -1;
