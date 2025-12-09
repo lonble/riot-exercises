@@ -15,20 +15,27 @@ USEMODULE += auto_init_gnrc_netif
 
 # enable single interface optimization.
 # remove this if more than one interface is present
-USEMODULE += gnrc_netif_single
+# USEMODULE += gnrc_netif_single
 
-# add minimal IPv6 support
+# add IPv6 support
 USEMODULE += gnrc_ipv6_default
 
-# enable ping support
-USEMODULE += gnrc_icmpv6_echo
+# add module to use provided network utils
+USEMODULE += netutils
 
 # add module to hex dump data
 USEMODULE += od
+USEMODULE += ztimer
+USEMODULE += ztimer_sec
 
 # add also the shell, some shell commands
 USEMODULE += shell
 USEMODULE += shell_cmds_default
+
+# disable echo of shell command
+CFLAGS += -DCONFIG_SHELL_NO_ECHO=1
+# default STDIO_RX_BUFSIZE is 64, increase it to match SHELL_DEFAULT_BUFSIZE
+CFLAGS += -DSTDIO_RX_BUFSIZE=128
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
