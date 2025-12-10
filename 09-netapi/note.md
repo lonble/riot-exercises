@@ -1,0 +1,57 @@
+- GNRC是RIOT的默认网络栈，基于IPv6，**不支持**IPv4
+- 网络栈的每一层都作为单独的线程运行，通过Messaging/IPC交换数据
+  - 网络栈每向上一层，线程优先级降低一级（数字变大）
+  - 使用异步通信
+  - 通信的本质是根据注册信息把数据包作为消息发到注册线程，然后注册线程逐层处理和转发
+  - 发送时的消息类型是`GNRC_NETAPI_MSG_TYPE_SND`，接收时为`GNRC_NETAPI_MSG_TYPE_RCV`
+- API中的数据包使用链表表示
+  - 链表节点的类型是`gnrc_pktsnip_t`，包含数据指针、数据长度、协议类型
+  - 每个节点表示一个头部，通过协议类型来层层解析
+  - 最后的payload协议类型为`GNRC_NETTYPE_UNDEF`
+  - **发送和接收时节点顺序是相反的，发送时为正常顺序，接收时payload作为链表头**
+- 使用模块`netdev_default`和`auto_init_gnrc_netif`启用网络设备，使用`gnrc_ipv6_default`启用网络栈，三者缺一不可
+- 网络接口的线程名为`nrf802154`，优先级为`2`
+- 如果设备支持**802.15.4**，则自动启用该协议，自动处理链路层
+  - 生成IPv6 Link-Local地址
+  - 自动启用**6LoWPAN**，线程名为`6lo`，优先级为`3`
+    - 因为IPv6要求的最小MTU远大于802.15.4的MTU，需要使用6LoWPAN分片
+- IPv6的线程名为`ipv6`，优先级为`4`
+- 接收流程
+  1. 使用`msg_init_queue()`初始化当前线程的消息队列，队列大小必须是2的整数幂
+     - 线程默认使用同步通信，会导致丢包，初始化后转为异步通信
+  2. 使用`gnrc_netreg_register()`注册期望接收的消息
+     - 参数包括协议类型`type`、上层协议号、线程id
+     - `type`填`GNRC_NETTYPE_IPV6`
+  3. 使用`msg_receive()`从消息队列中读取一条消息
+     - 如果消息队列为空则阻塞
+  4. （可选）检查消息类型`msg.type`是否为`GNRC_NETAPI_MSG_TYPE_RCV`
+     - 因为注册信息不区分发送还是接收，如果某线程使用这个元组发送数据，则该线程会收到消息，消息类型为`GNRC_NETAPI_MSG_TYPE_SND`
+     - 这个特性可以用来实现中间件，先经过这个线程处理，再转发给`ipv6`线程
+  5. 通过`msg.content.ptr`获取数据包指针，使用`gnrc_pktsnip_t *`来操作数据
+  6. 如前所述，链表第一个节点是payload，可通过`next`成员访问头部
+  7. 使用`gnrc_pktbuf_release()`释放数据包
+     - 数据包转发的终点必须释放内存，否则会内存泄漏
+  8. （可选）使用`gnrc_netreg_unregister()`取消注册
+- 发送流程
+  1. 使用`netutils_get_ipv6()`解析IPv6地址，如果是link-local地址，还会提供接口
+     - 该函数需要使用模块`netutils`
+  2. 使用`gnrc_pktbuf_add()`创建payload，
+     - `next`填`NULL`，因为发送时payload就是链表尾
+     - `type`填`GNRC_NETTYPE_UNDEF`
+  3. 使用`gnrc_ipv6_hdr_build()`创建IPv6头部
+     - `payload`就填payload，自动操作链表
+     - 源地址填`NULL`，自动分配
+     - 使用`ipv6_hdr_t *`来操作数据，修改上层协议号
+  4. 使用`gnrc_netif_hdr_build()`创建链路层头部
+     - link-local地址必须指定接口，如果使用了模块`gnrc_netif_single`，这一步可省略
+     - 参数都填`NULL`或`0`，自动分配
+     - 使用`gnrc_netif_hdr_set_netif()`写入接口信息
+       - 可以使用`container_of`从`netif_t`获取`gnrc_netif_t`
+  5. 使用`gnrc_pkt_prepend()`把链路层头部连接到IPv6头部之前
+  6. 使用`gnrc_netapi_dispatch_send()`发送数据包
+     - `type`填`GNRC_NETTYPE_IPV6`
+     - `demux_ctx`填`GNRC_NETREG_DEMUX_CTX_ALL`
+     - 这么填是因为`ipv6`线程注册了这个元组
+     - **`demux_ctx`不能填上层协议号，否则会发送到我们的接收线程，然后被丢弃**
+     - 消息类型自动设置为`GNRC_NETAPI_MSG_TYPE_SND`
+     - 发送是异步的，不会阻塞，不保证发送成功，也没有结果反馈
