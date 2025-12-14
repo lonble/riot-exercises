@@ -1,0 +1,45 @@
+- Sock API是socket编程的高级抽象API，可以自由切换底层实现，默认实现是GNRC
+- 除了GNRC IPv6的必要模块外，还需要模块`sock_udp`和`gnrc_sock_udp`
+- 模块`sock_util`提供地址解析等工具函数
+- 模块`sock_async_event`和`gnrc_sock_async`提供基于事件的消息通知，用于解决因缺失select机制而导致的无法释放socket的问题
+- 模块`gnrc_sock_udp`会自动创建一个线程，名为`udp`,优先级为`5`
+  - 该线程自动使用`gnrc_netreg_register()`注册了`GNRC_NETTYPE_UDP`和`GNRC_NETREG_DEMUX_CTX_ALL`元组
+  - 用户发送UDP消息时，跟其他网络通信一样基于Messaging/IPC，底层调用`gnrc_netapi_dispatch_send()`
+  - 用户接收UDP消息时，基于**Mailboxes**而不是Messaging/IPC
+- 接收流程
+  1. 创建一个`sock_udp_t`对象，称为`sock`，维护socket信息
+  2. 创建一个`sock_udp_ep_t`对象，称为`local`，保存本地地址和端口等
+  3. 使用`sock_udp_create()`绑定socket
+     - `local`的信息会保存到`sock`
+     - `remote`填`NULL`
+     - `flags`填`0`
+     - 如果`local.port`为`0`，则自动分配一个可用的端口
+     - 这一步会初始化`sock`中的`mbox`，并使用`gnrc_netreg_register()`注册`GNRC_NETTYPE_UDP`和本地端口到这个`mbox`
+  4. 创建一个`sock_udp_ep_t`对象，称为`remote`，用于保存收到的UDP包的源地址和端口等
+  5. 创建一个buffer，用于接收payload
+  6. 使用`sock_udp_recv()`接收UDP包
+     - `timeout`填`SOCK_NO_TIMEOUT`
+     - 源socket信息保存到`remote`
+     - UDP payload保存到buffer
+     - 这一步从`mbox`中读取消息，如果`mbox`为空则阻塞
+  7. （可选）使用`sock_udp_close()`释放socket
+- 发送流程
+  1. 创建一个`sock_udp_ep_t`对象，称为`remote`，保存目标地址和端口等
+  2. 使用`sock_udp_str2ep()`从字符串匹配地址和端口，保存到`remote`
+     - 字符串格式为`[address%dev]:port`
+     - 如果不是link-local地址，或使用了模块`gnrc_netif_single`，则`%dev`可以省略
+  3. 创建一个buffer，保存要发送的数据
+  4. 使用`sock_udp_send()`发送数据到`remote`
+     - 如果`sock`为`NULL`，则自动分配一个可用的源端口，否则使用`sock`中指定的地址和端口
+     - 这一步会调用`gnrc_netapi_dispatch_send()`，把包装好的包发给`udp`线程，再由`udp`线程转发
+- 事件驱动额外流程（仅针对接收流程，发送流程不变）
+  1. 创建一个新线程，使用`event_queue_init()`和`event_loop()`让其变成事件处理工具人
+     1. 事件队列需作为全局变量
+     2. 或者使用预定义事件队列，比如`EVENT_PRIO_MEDIUM`
+  2. 绑定socket后，使用`sock_udp_event_init()`指定`sock`对应的事件队列和回调函数
+     - 当这个socket收到消息后，会生成一个事件，然后让工具人线程调用指定的函数
+     - 这样可以仅在有消息后再读取，避免在读取时阻塞，从而方便关闭socket
+  3. 回调函数中，如果`type`包含flag`SOCK_ASYNC_MSG_RECV`，则使用`sock_udp_recv()`接收数据
+     - `timeout`参数填`0`，其他都一样
+  4. 关闭socket前，使用`sock_udp_event_close()`关闭socket和事件队列的关联
+  5. （可选）使用`event_post()`以及合适的回调函数动态绑定和释放socket
