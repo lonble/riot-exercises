@@ -87,8 +87,6 @@ void *receiver(void *arg) {
 
 /* [TASK 2: Add shell command handler for sending here] */
 int send_command(int argc, char **argv) {
-    (void)argv;
-
     // check arguments count
     if (argc != 3) {
         puts("usage: send <IPv6 address> <message>");
